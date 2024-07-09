@@ -1,0 +1,11 @@
+/tts_service/bin
+/tts_service/obj
+/tsubasa/tsubasa/obj
+/tsubasa/tsubasa/bin
+/DoubaoTtsSdk/obj
+/DoubaoTtsSdk/bin
+/.vs
+/tester/obj
+/tester/bin
+/tts_service/Statics/Videos/3_1720409012.mp3
+/tts_service/logs
