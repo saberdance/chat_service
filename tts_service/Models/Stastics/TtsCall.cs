@@ -6,7 +6,7 @@ namespace tts_service.Models.Stastics
     {
         [Key]
         public int Id { get; set; }
-        public int UserId { get; set; }
+        public string? UserId { get; set; }
         public string? UserName { get; set; }
         public int EngineId { get; set; }
         public string? EngineName { get; set; }

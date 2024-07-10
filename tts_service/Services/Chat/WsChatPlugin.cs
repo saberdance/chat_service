@@ -1,9 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System.Buffers.Text;
 using System.Text;
 using TouchSocket.Core;
 using TouchSocket.Http.WebSockets;
 using tsubasa;
+using tts_service.Db;
+using tts_service.Models;
 using tts_service.Models.Chat;
 using tts_service.Models.Protocol;
 using tts_service.Models.Session;
@@ -13,9 +16,14 @@ namespace tts_service.Services.Chat
     public class WsChatPlugin : PluginBase, IWebSocketReceivedPlugin
     {
         private readonly ILog _logger;
+        private readonly ChatContext _context;
+        private readonly string _db_connect_string = "Data Source=saberdance.cc;Initial Catalog=tts;Persist Security Info=True;User ID=sa;Password=198731Shiki;Encrypt=False;Trust Server Certificate=True";
         public WsChatPlugin(ILog logger)
         {
             _logger = logger;
+            var contextOptions = new DbContextOptionsBuilder<ChatContext>()
+                .UseSqlServer(_db_connect_string).Options;
+            _context = new ChatContext(contextOptions);
         }
         public async Task OnWebSocketReceived(IWebSocket client, WSDataFrameEventArgs e)
         {
@@ -57,41 +65,71 @@ namespace tts_service.Services.Chat
         {
             try
             {
+                _logger.Info("收到文本数据:"+e.DataFrame.ToText());
                 //如果格式不正确则进入catch逻辑，因此不在此判断text合法性
                 ChatRequest request = JsonConvert.DeserializeObject<ChatRequest>(e.DataFrame.ToText());
-                ChatContent userChatContent = CreateNewChatContent(request);
-                LogChatRequest(request, userChatContent);
-                ChatJob job = new ChatJob()
-                {
-                    Client = client,
-                    UserId = request.user_id,
-                    SessionId = request.session_id,
-                    InnerContent = userChatContent,
-                    OutputType = request.output_type
-                };
-                var jobRunner = new ChatJobRunner(job);
-                await jobRunner.Run();
+                
+                //var user = await _context.Users.Where(o=>o.Guid == request.user_id)(request.user_id);
+                //if (user == default)
+                //{
+                //    client.Send(JsonConvert.SerializeObject(new BaseResponse<string>() { Code = ProtocolErrorCode.UserNotFound,Message = "User not found"}));
+                //}
+
+                //！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+                //以下代码为逻辑接口测试用，须尽快删除
+                DoLogicTest(client);
+                return;
+                //！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+                //ChatContent userChatContent = CreateNewChatContent(request,user);
+                //LogChatRequest(request, userChatContent);
+                //ChatJob job = new ChatJob()
+                //{
+                //    Client = client,
+                //    UserId = user!.Id,
+                //    UserGuid = user!.Guid,
+                //    SessionId = request.session_id,
+                //    InnerContent = userChatContent,
+                //    OutputType = request.output_type
+                //};
+                //var jobRunner = new ChatJobRunner(job, _context);
+                //await jobRunner.Run();
             }
             catch (Exception err)
             {
                 _logger.Error("解析请求出错，JSON Parse Failed。原始文本：\n" + e.DataFrame.ToText());
-                ChatResponse chatResponse = new ChatResponse()
+                BaseResponse<string> chatResponse = new BaseResponse<string>()
                 {
-                    Code = -1,
-                    Message = "JSON Parse Failed"
+                    Code = ProtocolErrorCode.InvalidParameter,
+                    Message = "Request JSON Parse Error"
                 };
                 client.Send(JsonConvert.SerializeObject(chatResponse));
             }
-            if (!client.Client.IsClient)
+            //if (!client.Client.IsClient)
+            //{
+            //    client.Send("Recived");
+            //}
+        }
+
+        private void DoLogicTest(IWebSocket client)
+        {
+            ChatResponse content = new ChatResponse()
             {
-                client.Send("我已收到");
-            }
+                user_id = "123",
+                session_id = 1,
+                content_id = 2,
+                output_type = "voice",
+                is_end = true,
+                payload = "这是一句测试回复测试测试回复;嗷嗷嗷嗷哦嗷嗷嗷嗷嗷嗷嗷嗷嗷嗷哦嗷嗷嗷嗷嗷哦嗷嗷嗷嗷嗷嗷嗷嗷。",
+                voice_url = "/StaticFiles/Videos/3_1720429115.mp3",
+
+            };
+            client.Send(JsonConvert.SerializeObject(new SuccessResponse<ChatResponse>(content)));
         }
 
         private void CloseWebSocket(IWebSocket client)
         {
             _logger.Info("远程请求断开");
-            client.Close("断开");
+            client.Close("Disconnect");
         }
 
         private void LogBinaryInfo(WSDataFrameEventArgs e)
@@ -114,13 +152,14 @@ namespace tts_service.Services.Chat
             _logger.Info($"[Chat]---------------------------------------------------");
         }
 
-        private ChatContent CreateNewChatContent(ChatRequest request)
+        private ChatContent CreateNewChatContent(ChatRequest request,User user)
         {
             return new ChatContent()
             {
                 SessionId = request.session_id,
                 Sender = SenderType.User,
-                UserId = request.user_id,
+                UserId = user.Id,
+                UserGuid = user.Guid,
                 ContentType = ContentType.Text,
                 DateTime = DateTime.Now,
                 VoiceUrl = "",

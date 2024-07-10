@@ -10,6 +10,7 @@ using tts_service.Services;
 using tsubasa;
 using Microsoft.EntityFrameworkCore;
 using tts_service.Db;
+using tts_service.Services.Chat;
 
 namespace tts_service
 {
@@ -104,6 +105,8 @@ namespace tts_service
                 FileProvider = new PhysicalFileProvider(Defines.StaticFilesPath),
                 RequestPath = "/StaticFiles"
             });
+
+            ChatService.Init();
 
             app.MapControllers();
 

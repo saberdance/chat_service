@@ -60,7 +60,7 @@ namespace tts_service.Services.Chat.AIChater
                 }
             }
 
-            return outputLines;
+            return _outerContent;
         }
 
         private async Task GenerateTtsJob(List<string> aiAnswerLines)
@@ -88,11 +88,6 @@ namespace tts_service.Services.Chat.AIChater
         private string GenerateChatArgs()
         {
             throw new NotImplementedException();
-        }
-
-        public List<string> ExecuteShellCommand(string command, string args)
-        {
-            
         }
     }
 }

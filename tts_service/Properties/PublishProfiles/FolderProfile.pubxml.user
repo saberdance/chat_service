@@ -4,8 +4,8 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
 -->
 <Project>
   <PropertyGroup>
-    <_PublishTargetUrl>E:\Work\tts-service\tts_service\bin\Release\net8.0\publish\</_PublishTargetUrl>
-    <History>True|2024-07-03T08:20:50.2201344Z;</History>
+    <_PublishTargetUrl>D:\Work\tts_service\tts_service\bin\Release\net8.0\publish\</_PublishTargetUrl>
+    <History>True|2024-07-10T06:52:49.3992555Z;True|2024-07-10T14:34:33.8579981+08:00;True|2024-07-03T16:20:50.2201344+08:00;</History>
     <LastFailureDetails />
   </PropertyGroup>
 </Project>

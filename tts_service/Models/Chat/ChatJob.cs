@@ -8,6 +8,7 @@ namespace tts_service.Models.Chat
         public int Id { get; set; }
         public IWebSocket Client { get; set; }
         public int UserId { get; set; }
+        public string? UserGuid { get; set; }
         public int SessionId { get; set; }
         public string? OutputType { get; set; }
         public ChatContent? InnerContent { get; set; }

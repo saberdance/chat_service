@@ -1,8 +1,9 @@
 ﻿namespace tts_service.Models.Protocol
 {
-    public class BaseResponse
+    public class BaseResponse<T>
     {
-        public int Code { get; set; }
-        public string? Message { get; set; }
+        public ProtocolErrorCode Code { get; set; } = ProtocolErrorCode.Success;
+        public string? Message { get; set; } = "";
+        public T? Data { get; set; }
     }
 }

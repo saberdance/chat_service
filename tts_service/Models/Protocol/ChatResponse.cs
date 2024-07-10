@@ -2,9 +2,9 @@
 
 namespace tts_service.Models.Protocol
 {
-    public class ChatResponse:BaseResponse
+    public class ChatResponse
     {
-        public int user_id { get; set; }
+        public string? user_id { get; set; }
         public int session_id { get; set; }
         public int content_id { get;set; }
         public string? output_type { get; set; }

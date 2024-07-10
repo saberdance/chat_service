@@ -6,11 +6,12 @@ using tsubasa;
 
 namespace tts_service.Services.Chat
 {
-    public class ChatService
+    public static class ChatService
     {
-        private HttpService? _service;
-        private readonly string? _testWsToken = "Cotnetwork_Coooooool_Wocao";
-        public void Init(int port = 5155, string wsUrl = "/ws")
+        private static HttpService? _service;
+        private static readonly string? _testWsToken = "Cotnetwork_Coooooool_Wocao";
+        private const int _wsPort = 5155;
+        public static void Init(int port = _wsPort, string wsUrl = "/ws")
         {
             try
             {
@@ -31,7 +32,7 @@ namespace tts_service.Services.Chat
                     })
                     );
                 _service.Start();
-                _service.Logger.Info("Chat WebSocket服务启动");
+                _service.Logger.Info("Chat WebSocket服务启动:"+port);
             }
             catch (Exception e)
             {
@@ -41,7 +42,7 @@ namespace tts_service.Services.Chat
 
         }
 
-        private bool VerifyConnection(IHttpSocketClient client, TouchSocket.Http.HttpContext context)
+        private static bool VerifyConnection(IHttpSocketClient client, TouchSocket.Http.HttpContext context)
         {
             if (!context.Request.IsUpgrade())//如果不包含升级协议的header，就直接返回false。
             {

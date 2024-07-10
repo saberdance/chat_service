@@ -24,11 +24,11 @@ namespace tts_service.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<RegisterResponse>> Register(RegisterRequest request)
+        public async Task<ActionResult<BaseResponse<User>>> Register(RegisterRequest request)
         {
             if (!request.Validate())
             {
-                return BadRequest(new RegisterResponse { Code = 400, Message = "Invalid Register Param" });
+                return BadRequest(new InvalidParamResponse());
             }
             return request.AccountType switch
             {
@@ -36,36 +36,36 @@ namespace tts_service.Controllers
                 AccountType.Phone => await RegisterPhone(request),
                 AccountType.WeiXin => await RegisterWeiXin(request),
                 AccountType.Email => await RegisterEmail(request),
-                _ => BadRequest(new RegisterResponse { Code = 400, Message = "Invalid account type" })
+                _ => BadRequest(new InvalidParamResponse("Invalid account type" ))
             };
         }
         
 
-        private async Task<ActionResult<RegisterResponse>> RegisterEmail(RegisterRequest request)
+        private async Task<ActionResult<BaseResponse<User>>> RegisterEmail(RegisterRequest request)
         {
             //TODO：邮箱注册
             return NotFound();
         }
 
-        private async Task<ActionResult<RegisterResponse>> RegisterWeiXin(RegisterRequest request)
+        private async Task<ActionResult<BaseResponse<User>>> RegisterWeiXin(RegisterRequest request)
         {
             //TODO：微信号注册
             return NotFound();
         }
 
-        private async Task<ActionResult<RegisterResponse>> RegisterPhone(RegisterRequest request)
+        private async Task<ActionResult<BaseResponse<User>>> RegisterPhone(RegisterRequest request)
         {
             //手机号账户注册
             return NotFound();
 
         }
 
-        private async Task<ActionResult<RegisterResponse>> RegisterPassword(RegisterRequest request)
+        private async Task<ActionResult<BaseResponse<User>>> RegisterPassword(RegisterRequest request)
         {
             //密码账户注册
             if (await _context.Users.AnyAsync(u => u.Account == request.Account))
             {
-                return BadRequest(new RegisterResponse { Code = 400, Message = "Account already exists" });
+                return BadRequest(new InvalidCredentialResponse("Account already exists"));
             }
             var user = new User
             {
@@ -77,41 +77,44 @@ namespace tts_service.Controllers
             };
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
-            return Ok(new RegisterResponse { Code = 0, Message = "Register Success" ,User = user});
+            return Ok(new SuccessResponse<User>(user));
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<LoginResponse>> Login(PsLoginRequest request)
+        public async Task<ActionResult<BaseResponse<LoginResponse>>> Login(PsLoginRequest request)
         { 
             if (!request.Validate())
             {
-                return BadRequest(new LoginResponse { Code = -1, Message = "Invalid Login Param" });
+                return BadRequest(new InvalidCredentialResponse("Invalid Login Param"));
             }
             User user = null;
             if (!string.IsNullOrEmpty(request.Account))  
             {
-                user = await _context.Users.FirstOrDefaultAsync(u => u.Account == request.Account && u.Password == UtilFunc.MD5String(request.Password));
+                user = await _context!.Users!.FirstOrDefaultAsync(u => u.Account == request.Account && u.Password == UtilFunc.MD5String(request.Password));
             }
             else
             {
-                user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone && u.Password == UtilFunc.MD5String(request.Password));
+                user = await _context!.Users!.FirstOrDefaultAsync(u => u.Phone == request.Phone && u.Password == UtilFunc.MD5String(request.Password));
             }
             if (user == null)
             {
-                return BadRequest(new LoginResponse { Code = -2, Message = "Invalid Account or Password" });
+                return BadRequest(new InvalidCredentialResponse("Invalid Account or Password"));
             }
             if (DateTime.Now < user.TokenExpire && !string.IsNullOrEmpty(user.Token))
             {
-                return Ok(new LoginResponse { Code = 0, Message = "Login Success", Token = user.Token, TokenExpire = user.TokenExpire });
             }
             else
             {
                 user.Token = _jwtHelper.CreateToken();
                 user.TokenExpire = DateTime.Now.AddDays(30);
                 await _context.SaveChangesAsync();
-                return Ok(new LoginResponse { Code = 0, Message = "Login Success", Token = user.Token, TokenExpire = user.TokenExpire });
-            
-            }       
+            }
+            return Ok(new BaseResponse<LoginResponse>
+            {
+                Code = 0,
+                Message = "Login Success",
+                Data = new() {Id= user.Id, Guid = user.Guid, Token = user.Token, TokenExpire = user.TokenExpire }
+            });
         }
     }
 }

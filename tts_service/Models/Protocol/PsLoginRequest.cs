@@ -1,7 +1,7 @@
 ﻿
 namespace tts_service.Models.Protocol
 {
-    public class PsLoginRequest : BaseRequest
+    public class PsLoginRequest
     {
         public string? Account { get; set; }
         public string? Phone { get; set; }

@@ -9,6 +9,7 @@ using tts_service.Services;
 using tsubasa;
 using tts_service.Models.Stastics;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
 
 namespace tts_service.Controllers
 {
@@ -24,9 +25,9 @@ namespace tts_service.Controllers
         }
 
         [HttpPost("tts_gen")]
-        public async Task<ActionResult<TtsResponse>> TtsGen(Models.Protocol.TtsRequest request)
+        public async Task<ActionResult<BaseResponse<string>>> TtsGen(Models.Protocol.TtsRequest request)
         {
-            var user = await _context.Users.FindAsync(request.UserId);
+            var user = await _context.Users.Where(o=>o.Guid == request.UserId).FirstOrDefaultAsync();
             if (user == null)
             {
                 return NotFound();
@@ -51,12 +52,12 @@ namespace tts_service.Controllers
             }
             engine.CallCount++;
             engine.TokenRemain--;
-            TtsCall ttsCall = await _context.TtsCalls.Where(c => c.UserId == user.Id && c.VoiceId == voice.Id&& c.EngineId == engine.Id).FirstOrDefaultAsync();
+            TtsCall ttsCall = await _context.TtsCalls.Where(c => c.UserId == user.Guid && c.VoiceId == voice.Id&& c.EngineId == engine.Id).FirstOrDefaultAsync();
             if (ttsCall == default)
             {
                 ttsCall = new()
                 {
-                    UserId = user.Id,
+                    UserId = user.Guid,
                     UserName = user.Username,
                     VoiceId = voice.Id,
                     VoiceName = voice.Name,
@@ -71,24 +72,24 @@ namespace tts_service.Controllers
                 ttsCall.CallCount++;
             }
             await _context.SaveChangesAsync();
-            return new TtsResponse
+            return new BaseResponse<string>
             {
-                Code = 0,
-                Message = "Success",
-                Audio = $"/StaticFiles/Videos/{fileName}"
+                Data = $"/StaticFiles/Videos/{fileName}"
             };
         }
 
         [HttpGet("get_engines")]
-        public async Task<ActionResult<List<TtsEngine>>> GetEngines()
+        public async Task<ActionResult<BaseResponse<List<TtsEngine>>>> GetEngines()
         {
-            return await _context.TtsEngines.ToListAsync();
+            var list = await _context.TtsEngines.ToListAsync();
+            return Ok(new BaseResponse<List<TtsEngine>>() { Data = list });
         }
 
         [HttpGet("get_voices")]
-        public async Task<ActionResult<List<TtsVoice>>> GetVoices()
+        public async Task<ActionResult<BaseResponse<List<TtsVoice>>>> GetVoices()
         {
-            return await _context.TtsVoices.ToListAsync();
+            var list = await _context.TtsVoices.ToListAsync();
+            return Ok(new BaseResponse<List<TtsVoice>>() { Data = list });
         }
     }
 }

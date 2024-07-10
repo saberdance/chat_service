@@ -15,15 +15,14 @@ namespace tts_service.Services.Chat
     {
         private ChatJob _job;
         private ILog _logger;
-        private readonly string _db_connect_string = "Data Source=saberdance.cc;Initial Catalog=tts;Persist Security Info=True;User ID=sa;Password=198731Shiki;Encrypt=False;Trust Server Certificate=True";
+        
         private ChatContext _context;
 
-        public ChatJobRunner(ChatJob job)
+        public ChatJobRunner(ChatJob job,ChatContext context)
         {
+            _context = context;
             _job = job;
-            var contextOptions = new DbContextOptionsBuilder<ChatContext>()
-                .UseSqlServer(_db_connect_string).Options;
-            _context = new ChatContext(contextOptions);
+            
         }
 
         public async Task<bool> Run()
@@ -49,23 +48,29 @@ namespace tts_service.Services.Chat
                 DateTime = DateTime.Now,
                 ContentType = _job.OutputType == "voice"? ContentType.Voice : ContentType.Text,
             };
-            outerContent = await ChaterSelector.GetChater(engine.Name!).Chat(_job, outerContent);
+            string innerInputs = GenerateInnterInput(session);
+            outerContent = await ChaterSelector.GetChater(engine.Name!).Chat(_job, outerContent,innerInputs);
             session.ContentCount++;
             _context.ChatContents.Add(outerContent);
             await _context.SaveChangesAsync();
             _logger.Info($"End Chat Job:{ _job.UserId}|{_job.SessionId}");
-            //TODO:继续写ChatJob
             return true;
         }
 
-        private void SendErrorResponse(string msg)
+        private string GenerateInnterInput(ChatSession session)
         {
-            ChatResponse chatResponse = new ChatResponse()
+            //TODO：拼合历史记录和当前输入为一个Input
+            throw new NotImplementedException();
+        }
+
+        private void SendErrorResponse(string? msg = null)
+        {
+            BaseResponse<string> response = new BaseResponse<string>() 
             {
-                Code = -1,
-                Message = msg
+                Code = ProtocolErrorCode.WebsocketError,
+                Message = msg ?? "Websocket Error"
             };
-            _job.Client.Send(JsonConvert.SerializeObject(chatResponse));
+            _job.Client.Send(JsonConvert.SerializeObject(msg));
         }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using tts_service.Db;
 
@@ -11,9 +12,11 @@ using tts_service.Db;
 namespace tts_service.Migrations
 {
     [DbContext(typeof(ChatContext))]
-    partial class TtsContextModelSnapshot : ModelSnapshot
+    [Migration("20240710053131_2024-7-10-Chat-API")]
+    partial class _2024710ChatAPI
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
